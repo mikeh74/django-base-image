@@ -11,6 +11,6 @@ It does not include any application code or python packages these should be
 added in a separate image that extends this base image.
 
 This image contains a lot of additional dependencies that are needed for the
-buil phase but are not needed at runtime. The runtime image should use a
+build phase but are not needed at runtime. The runtime image should use a
 multi-stage build to copy only the necessary files from this image to the
 final image.
