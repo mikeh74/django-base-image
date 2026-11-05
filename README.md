@@ -14,3 +14,36 @@ This image contains a lot of additional dependencies that are needed for the
 build phase but are not needed at runtime. The runtime image should use a
 multi-stage build to copy only the necessary files from this image to the
 final image.
+
+An example Dockerfile using this as a base might look like this:
+
+```
+FROM ghcr.io/lte-packages/django-base-image:latest as compile-image
+
+RUN --mount=type=cache,target=/root/.cache/uv \
+    UV_COMPILE_BYTECODE=1 \
+    uv pip install -r requirements.txt
+
+FROM ubuntu:24.04
+
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+# Install additional runtime dependencies required by dev and production environments
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends default-mysql-client \
+    libcairo2-dev libjpeg-dev libgif-dev curl \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy the virtual environment from the compile image and add it to the PATH
+COPY --from=compile-image /opt/venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+EXPOSE 8000
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+
+```
+
+This is a simplified example.
+
