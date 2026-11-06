@@ -1,29 +1,38 @@
 # Base image to create venv and install requirements
 FROM ubuntu:24.04
 ENV PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
 
+# Build headers for compiling Python packages:
+#   mysqlclient (MySQL), python-ldap/django-auth-ldap (LDAP),
+#   cryptography/cffi (SSL, libffi), Pillow (JPEG/zlib/freetype),
+#   lxml (libxml2/libxslt). redis-py and pysolr are pure Python.
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
-    build-essential gcc \
-    git \
-    openssh-client \
-    ca-certificates \
-    default-libmysqlclient-dev \
-    pkg-config \
-    libcairo2-dev \
-    libjpeg-dev \
-    libgif-dev \
-    libsasl2-dev \
-    libldap2-dev \
-    libssl-dev \
-    ldap-utils \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+  && apt-get install -y --no-install-recommends \
+  build-essential gcc \
+  ca-certificates \
+  git \
+  default-libmysqlclient-dev \
+  ldap-utils \
+  libldap2-dev \
+  libsasl2-dev \
+  libssl-dev \
+  libffi-dev \
+  libjpeg-dev \
+  zlib1g-dev \
+  libfreetype6-dev \
+  libxml2-dev \
+  libxslt1-dev \
+  openssh-client \
+  libcairo2-dev \
+  libjpeg-dev \
+  libgif-dev \
+  && apt-get clean \
+  && rm -rf /var/lib/apt/lists/*
 
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
-
-# Create a virtual environment and set it as the default Python environment
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/
 RUN uv venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 ENV VIRTUAL_ENV=/opt/venv
+RUN uv pip install --upgrade pip

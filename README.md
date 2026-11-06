@@ -47,3 +47,41 @@ CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
 
 This is a simplified example.
 
+## Runtime dependencies
+
+A Django CMS application using MySQL, Redis, Solr and LDAP authentication needs
+the following shared libraries at runtime. These are the packages to install
+in the final (runtime) image; the `-dev` headers and compilers in this image
+are only needed to build Python packages.
+
+| Service / feature | Apt package (Ubuntu 24.04) | Used by |
+|---|---|---|
+| MySQL client | `libmysqlclient21` | `mysqlclient` |
+| LDAP | `libldap2` | `python-ldap`, `django-auth-ldap` |
+| SASL (LDAP auth) | `libsasl2-2` | `python-ldap` |
+| TLS / crypto | `libssl3t64`, `libffi8`, `ca-certificates` | `cryptography`, `cffi`, HTTPS / LDAPS |
+| Images | `libjpeg-turbo8`, `zlib1g`, `libfreetype6` | `Pillow` |
+| XML | `libxml2`, `libxslt1.1` | `lxml` |
+
+Redis (`redis-py`) and Solr (`pysolr`) are pure Python and need no runtime
+system packages. Connecting to them only requires network access to the
+servers.
+
+Example runtime install:
+
+```dockerfile
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends \
+  libmysqlclient21 \
+  libldap2 \
+  libsasl2-2 \
+  libssl3t64 \
+  libffi8 \
+  ca-certificates \
+  libjpeg-turbo8 \
+  zlib1g \
+  libfreetype6 \
+  libxml2 \
+  libxslt1.1 \
+  && rm -rf /var/lib/apt/lists/*
+```
